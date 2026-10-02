@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Calidad - Planta OR</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 400px; }
+        h2 { color: #1e3a8a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; color: #475569; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; background-color: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #1d4ed8; }
+        #resultado { display: none; margin-top: 20px; padding: 15px; border-radius: 6px; }
+        .optimo { background-color: #dcfce7; color: #14532d; border-left: 5px solid #22c55e; }
+        .alerta { background-color: #fee2e2; color: #7f1d1d; border-left: 5px solid #ef4444; }
+        ul { margin: 5px 0 0 0; padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Ingreso de Parámetros OR</h2>
+        <div class="form-group">
+            <label>Token de Seguridad (API Key):</label>
+            <input type="text" id="token" value="PlantaOR">
+        </div>
+        <div class="form-group">
+            <label>pH del Agua Tratada (6.5 - 8.5):</label>
+            <input type="number" id="ph" step="0.1" value="7.2">
+        </div>
+        <div class="form-group">
+            <label>Conductividad (µS/cm):</label>
+            <input type="number" id="conductividad" step="0.1" value="15.5">
+        </div>
+        <div class="form-group">
+            <label>Flujo Permeado (m³/h):</label>
+            <input type="number" id="permeado" step="0.1" value="12.0">
+        </div>
+        <div class="form-group">
+            <label>Flujo Rechazo (m³/h):</label>
+            <input type="number" id="rechazo" step="0.1" value="5.0">
+        </div>
+        <button onclick="enviarEvaluacion()">Evaluar Calidad</button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function enviarEvaluacion() {
+            const token = document.getElementById('token').value;
+            const datos = {
+                ph: parseFloat(document.getElementById('ph').value),
+                conductividad: parseFloat(document.getElementById('conductividad').value),
+                flujoPermeado: parseFloat(document.getElementById('permeado').value),
+                flujoRechazo: parseFloat(document.getElementById('rechazo').value)
+            };
+
+            const divResultado = document.getElementById('resultado');
+            
+            try {
+                const response = await fetch('/api/calidadagua/evaluar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Api-Key': token
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                if (response.status === 401) {
+                    divResultado.className = 'alerta';
+                    divResultado.style.display = 'block';
+                    divResultado.innerHTML = '<strong>ACCESO DENEGADO:</strong> Token de seguridad inválido.';
+                    return;
+                }
+
+                const res = await response.json();
+                divResultado.style.display = 'block';
+                
+                if (res.cumpleParametros) {
+                    divResultado.className = 'optimo';
+                    divResultado.innerHTML = `<strong>${res.estadoGeneral}</strong><br>Eficiencia de Recuperación: ${res.porcentajeRecuperacion}%`;
+                } else {
+                    divResultado.className = 'alerta';
+                    let alertasHtml = res.alertas.map(a => `<li>${a}</li>`).join('');
+                    divResultado.innerHTML = `<strong>${res.estadoGeneral}</strong><br>Eficiencia: ${res.porcentajeRecuperacion}%<br><ul>${alertasHtml}</ul>`;
+                }
+
+            } catch (error) {
+                divResultado.className = 'alerta';
+                divResultado.style.display = 'block';
+                divResultado.innerHTML = 'Error al conectar con la API de la planta.';
+            }
+        }
+    </script>
+
+</body>
+</html>

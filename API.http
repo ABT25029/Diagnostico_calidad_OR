@@ -1,0 +1,21 @@
+@API_HostAddress = http://localhost:5154
+
+### Evaluar Calidad de Agua (Petición Autorizada con API Key)
+POST {{API_HostAddress}}/api/calidadagua/evaluar
+Content-Type: application/json
+X-Api-Key: PlantaOR
+
+{
+  "ph": 7.2,
+  "conductividad": 15.5,
+  "flujoPermeado": 12.0,
+  "flujoRechazo": 5.0
+      [HttpGet("historial")]
+    public async Task<ActionResult> ObtenerHistorial()
+    {
+        // Busca todos los registros guardados en la base de datos
+        var historial = await _context.HistorialPlanta.ToListAsync();
+        return Ok(historial);
+    }
+
+}

@@ -1,0 +1,7 @@
+bin/
+obj/
+.vs/
+.git/
+*.db
+API Planta OR_files/
+API Planta OR.html

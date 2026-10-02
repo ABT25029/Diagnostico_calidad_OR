@@ -1,4 +1,4 @@
-using API;
+﻿using API;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +12,7 @@ if (!string.IsNullOrEmpty(port))
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 // CONFIGURACION DE SQLITE
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -34,9 +35,11 @@ app.UseDefaultFiles();   // sirve wwwroot/index.html en "/"
 app.UseStaticFiles();
 
 // Filtro de seguridad por API Key
+app.UseCors();
 app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
